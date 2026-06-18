@@ -1,0 +1,147 @@
+name: Validate & Deploy AltStore Repo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # ── Job 1: Validate apps.json ──────────────────────────────────────────────
+  validate:
+    name: Validate apps.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate JSON syntax
+        run: |
+          echo "Checking apps.json is valid JSON..."
+          node -e "
+            const fs = require('fs');
+            const raw = fs.readFileSync('apps.json', 'utf8');
+            let data;
+            try {
+              data = JSON.parse(raw);
+            } catch (e) {
+              console.error('❌ apps.json is not valid JSON:', e.message);
+              process.exit(1);
+            }
+            console.log('✓ JSON syntax is valid');
+
+            // Required top-level fields
+            const required = ['name', 'identifier', 'apps'];
+            for (const field of required) {
+              if (!data[field]) {
+                console.error('❌ Missing required field: ' + field);
+                process.exit(1);
+              }
+            }
+            console.log('✓ Required top-level fields present');
+
+            // Validate apps array
+            if (!Array.isArray(data.apps)) {
+              console.error('❌ apps must be an array');
+              process.exit(1);
+            }
+
+            const bundleIds = new Set();
+            for (const [i, app] of data.apps.entries()) {
+              const prefix = 'apps[' + i + '] (' + (app.name || 'unnamed') + ')';
+
+              if (!app.name) { console.error('❌ ' + prefix + ': missing name'); process.exit(1); }
+              if (!app.bundleIdentifier) { console.error('❌ ' + prefix + ': missing bundleIdentifier'); process.exit(1); }
+              if (!app.versions || !Array.isArray(app.versions) || app.versions.length === 0) {
+                console.error('❌ ' + prefix + ': must have at least one version');
+                process.exit(1);
+              }
+
+              // Check for duplicate bundle IDs
+              if (bundleIds.has(app.bundleIdentifier)) {
+                console.error('❌ Duplicate bundleIdentifier: ' + app.bundleIdentifier);
+                process.exit(1);
+              }
+              bundleIds.add(app.bundleIdentifier);
+
+              // Validate versions
+              for (const [j, ver] of app.versions.entries()) {
+                const vp = prefix + '.versions[' + j + ']';
+                if (!ver.version) { console.error('❌ ' + vp + ': missing version'); process.exit(1); }
+                if (!ver.downloadURL) { console.error('❌ ' + vp + ': missing downloadURL'); process.exit(1); }
+                if (ver.date && isNaN(Date.parse(ver.date))) {
+                  console.error('❌ ' + vp + ': invalid date format (use ISO 8601)');
+                  process.exit(1);
+                }
+              }
+
+              console.log('✓ ' + prefix + ' — ' + app.versions.length + ' version(s)');
+            }
+
+            console.log('');
+            console.log('✅ apps.json validation passed!');
+            console.log('   Repository: ' + data.name);
+            console.log('   Apps: ' + data.apps.length);
+          "
+
+      - name: Check IPA references exist
+        run: |
+          echo "Checking that referenced IPA files exist..."
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('apps.json', 'utf8'));
+            let missing = 0;
+            for (const app of data.apps) {
+              for (const ver of app.versions || []) {
+                // Only check relative URLs (not https://)
+                const url = ver.downloadURL || '';
+                if (!url.startsWith('http')) {
+                  if (!fs.existsSync(url)) {
+                    console.warn('⚠ IPA not found locally: ' + url + ' (OK if hosted externally)');
+                  } else {
+                    console.log('✓ Found: ' + url);
+                  }
+                }
+              }
+            }
+          "
+
+  # ── Job 2: Deploy to GitHub Pages ─────────────────────────────────────────
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
