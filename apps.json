@@ -1,0 +1,63 @@
+{
+  "name": "My AltStore Repository",
+  "identifier": "com.yourname.altsource",
+  "subtitle": "Curated apps, updated regularly.",
+  "description": "A self-hosted AltStore and SideStore compatible repository. All apps are reviewed and maintained by the repository owner.",
+  "iconURL": "https://yourusername.github.io/altstore-repo/icons/repo-icon.png",
+  "headerURL": "https://yourusername.github.io/altstore-repo/icons/repo-header.png",
+  "website": "https://yourusername.github.io/altstore-repo/",
+  "tintColor": "#007AFF",
+  "featuredApps": [
+    "com.example.demoapp"
+  ],
+  "apps": [
+    {
+      "name": "Demo App",
+      "bundleIdentifier": "com.example.demoapp",
+      "developerName": "Your Name",
+      "subtitle": "A demonstration app for your repository.",
+      "localizedDescription": "This is a fully configured example app showing how your AltStore repository works.\n\nFeatures:\n• Example feature one\n• Example feature two\n• Example feature three\n\nThis app demonstrates the full metadata format supported by this repository.",
+      "iconURL": "https://yourusername.github.io/altstore-repo/icons/com.example.demoapp.png",
+      "tintColor": "#007AFF",
+      "screenshotURLs": [
+        "https://yourusername.github.io/altstore-repo/icons/com.example.demoapp-screen1.png",
+        "https://yourusername.github.io/altstore-repo/icons/com.example.demoapp-screen2.png"
+      ],
+      "versions": [
+        {
+          "version": "1.0.1",
+          "date": "2025-06-01T12:00:00Z",
+          "localizedDescription": "• Fixed a crash on launch\n• Improved performance\n• Updated UI elements",
+          "downloadURL": "https://yourusername.github.io/altstore-repo/apps/com.example.demoapp-1.0.1.ipa",
+          "size": 1048576,
+          "minOSVersion": "15.0",
+          "maxOSVersion": "18.9"
+        },
+        {
+          "version": "1.0.0",
+          "date": "2025-05-01T12:00:00Z",
+          "localizedDescription": "• Initial release",
+          "downloadURL": "https://yourusername.github.io/altstore-repo/apps/com.example.demoapp-1.0.0.ipa",
+          "size": 1024000,
+          "minOSVersion": "15.0",
+          "maxOSVersion": "18.9"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {}
+      }
+    }
+  ],
+  "news": [
+    {
+      "title": "Repository Launched",
+      "identifier": "repo-launch-2025",
+      "caption": "Welcome to my AltStore repository.",
+      "tintColor": "#007AFF",
+      "imageURL": "https://yourusername.github.io/altstore-repo/icons/news-launch.png",
+      "date": "2025-06-01T12:00:00Z",
+      "notify": false
+    }
+  ]
+}

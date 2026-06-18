@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repo Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #007AFF; --blue-light: #3395FF;
+      --bg: #0a0a0f; --surface: rgba(255,255,255,0.055);
+      --surface2: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.10);
+      --text: #f0f0f5; --muted: rgba(240,240,245,0.50);
+      --red: #FF3B30; --green: #34C759;
+      --radius: 14px; --radius-sm: 10px;
+    }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: ''; position: fixed;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,122,255,0.12) 0%, transparent 70%);
+      top: -200px; left: -200px; filter: blur(100px); pointer-events: none; z-index: 0;
+    }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      background: rgba(10,10,15,0.80); border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 980px; margin: 0 auto; padding: 0 20px;
+      display: flex; align-items: center; justify-content: space-between; height: 52px;
+    }
+    .nav-brand { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .admin-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      background: rgba(255,149,0,0.2); color: #FF9500;
+      border: 1px solid rgba(255,149,0,0.35); border-radius: 5px;
+      padding: 2px 7px;
+    }
+    .nav-actions { display: flex; gap: 8px; }
+
+    /* Layout */
+    .container { max-width: 980px; margin: 0 auto; padding: 24px 20px 80px; position: relative; z-index: 1; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-secondary {
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.09); }
+    .btn-danger { background: rgba(255,59,48,0.15); color: var(--red); border: 1px solid rgba(255,59,48,0.25); }
+    .btn-danger:hover { background: rgba(255,59,48,0.25); }
+    .btn-success { background: rgba(52,199,89,0.15); color: var(--green); border: 1px solid rgba(52,199,89,0.25); }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; }
+    .tab {
+      padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+      cursor: pointer; color: var(--muted); background: transparent; border: none;
+      transition: all .2s;
+    }
+    .tab.active { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Card */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+    }
+    .card-title { font-size: 15px; font-weight: 600; }
+    .card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    input, textarea, select {
+      background: rgba(0,0,0,0.30); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      font-size: 13px; color: var(--text); font-family: inherit; width: 100%;
+      transition: border-color .2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none; border-color: rgba(0,122,255,0.5);
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.10);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    select option { background: #1a1a2e; }
+
+    /* Version list */
+    .version-list { display: flex; flex-direction: column; gap: 10px; }
+    .version-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+    }
+    .version-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+    .version-tag {
+      font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 5px;
+      background: rgba(0,122,255,0.15); color: var(--blue-light);
+    }
+
+    /* App list */
+    .app-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .app-list-item:last-child { border-bottom: none; }
+    .app-list-left { display: flex; align-items: center; gap: 12px; }
+    .app-list-icon {
+      width: 44px; height: 44px; border-radius: 11px; overflow: hidden;
+      background: rgba(0,122,255,0.15); flex-shrink: 0;
+    }
+    .app-list-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .app-list-icon .icon-fb { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .app-list-name { font-size: 14px; font-weight: 600; }
+    .app-list-bundle { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 2px; }
+    .app-list-version { font-size: 12px; color: var(--muted); }
+
+    /* JSON preview */
+    .json-preview {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+      color: #a8d8a8; line-height: 1.6;
+      max-height: 400px; overflow-y: auto; white-space: pre;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: rgba(30,30,40,0.95); border: 1px solid var(--border);
+      backdrop-filter: blur(16px); border-radius: 12px;
+      padding: 12px 20px; font-size: 13px; font-weight: 500;
+      z-index: 999; transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Repo meta section */
+    .section-divider {
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+      padding: 8px 0 14px; margin-top: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">
+      📦 Repo Admin
+      <span class="admin-badge">Admin</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="loadFromFile()">📂 Load JSON</button>
+      <button class="btn btn-success" onclick="exportJSON()">⬇ Export JSON</button>
+      <a href="index.html" class="btn btn-secondary">← View Site</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('apps')">Apps</button>
+    <button class="tab" onclick="switchTab('repo')">Repository Info</button>
+    <button class="tab" onclick="switchTab('preview')">JSON Preview</button>
+    <button class="tab" onclick="switchTab('guide')">Update Guide</button>
+  </div>
+
+  <!-- APPS TAB -->
+  <div class="tab-panel active" id="tab-apps">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 style="font-size:18px; font-weight:700;">Apps <span id="apps-count" style="color:var(--muted); font-size:14px; font-weight:400;"></span></h2>
+      <button class="btn btn-primary" onclick="openAddApp()">+ Add App</button>
+    </div>
+
+    <div class="card" id="app-list-card">
+      <div id="app-list-container">
+        <p style="color:var(--muted); font-size:13px;">No apps yet. Click "Add App" to get started.</p>
+      </div>
+    </div>
+
+    <!-- Add / Edit App Form (hidden by default) -->
+    <div class="card" id="app-form-card" style="display:none;">
+      <div class="card-header">
+        <div>
+          <div class="card-title" id="app-form-title">Add App</div>
+          <div class="card-sub">Fill in all required fields. Bundle ID must be unique.</div>
+        </div>
+        <button class="btn btn-secondary" onclick="closeAppForm()">Cancel</button>
+      </div>
+
+      <div class="section-divider">App Info</div>
+      <div class="form-grid" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label>App Name *</label>
+          <input type="text" id="f-name" placeholder="My App" />
+        </div>
+        <div class="form-group">
+          <label>Bundle Identifier *</label>
+          <input type="text" id="f-bundle" placeholder="com.example.myapp" />
+        </div>
+        <div class="form-group">
+          <label>Developer Name</label>
+          <input type="text" id="f-dev" placeholder="Your Name" />
+        </div>
+        <div class="form-group">
+          <label>Subtitle</label>
+          <input type="text" id="f-subtitle" placeholder="Short one-line description" />
+        </div>
+        <div class="form-group">
+          <label>Icon URL</label>
+          <input type="text" id="f-icon" placeholder="icons/com.example.myapp.png" />
+        </div>
+        <div class="form-group">
+          <label>Tint Color (hex)</label>
+          <input type="text" id="f-tint" placeholder="#007AFF" />
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea id="f-desc" placeholder="Full app description shown to users..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Screenshot URLs (one per line)</label>
+          <textarea id="f-screenshots" placeholder="icons/com.example.myapp-screen1.png&#10;icons/com.example.myapp-screen2.png" style="min-height:60px;"></textarea>
+        </div>
+      </div>
+
+      <div class="section-divider">Versions</div>
+      <div id="version-list" class="version-list"></div>
+      <button class="btn btn-secondary" style="margin-top:12px;" onclick="addVersion()">+ Add Version</button>
+
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="saveApp()">Save App</button>
+        <button class="btn btn-danger" id="delete-app-btn" onclick="deleteCurrentApp()" style="display:none;">Delete App</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPO TAB -->
+  <div class="tab-panel" id="tab-repo">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Repository Metadata</div>
+          <div class="card-sub">This appears in AltStore / SideStore when users add your source.</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveRepoMeta()">Save</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Repository Name *</label>
+          <input type="text" id="m-name" placeholder="My App Repository" />
+        </div>
+        <div class="form-group">
+          <label>Identifier *</label>
+          <input type="text" id="m-id" placeholder="com.yourname.altsource" />
+        </div>
+        <div class="form-group full">
+          <label>Subtitle</label>
+          <input type="text" id="m-subtitle" placeholder="A short description of your repository" />
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea id="m-desc" placeholder="Full description of your repository"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Icon URL</label>
+          <input type="text" id="m-icon" placeholder="icons/repo-icon.png" />
+        </div>
+        <div class="form-group">
+          <label>Header Image URL</label>
+          <input type="text" id="m-header" placeholder="icons/repo-header.png" />
+        </div>
+        <div class="form-group">
+          <label>Website URL</label>
+          <input type="text" id="m-website" placeholder="https://yourusername.github.io/altstore-repo/" />
+        </div>
+        <div class="form-group">
+          <label>Tint Color (hex)</label>
+          <input type="text" id="m-tint" placeholder="#007AFF" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW TAB -->
+  <div class="tab-panel" id="tab-preview">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h2 style="font-size:18px; font-weight:700;">apps.json Preview</h2>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="copyJSON()">📋 Copy JSON</button>
+        <button class="btn btn-success" onclick="exportJSON()">⬇ Download</button>
+      </div>
+    </div>
+    <div class="json-preview" id="json-output">Loading…</div>
+    <p style="font-size:12px; color:var(--muted); margin-top:12px;">
+      ⚠ This is a preview. Download the file and replace your <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">apps.json</code> on GitHub, then push to deploy.
+    </p>
+  </div>
+
+  <!-- GUIDE TAB -->
+  <div class="tab-panel" id="tab-guide">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px; font-size:18px;">How to Update Your Repository</div>
+      <div style="display:flex; flex-direction:column; gap:14px; font-size:14px; line-height:1.7; color:var(--muted);">
+        <div><strong style="color:var(--text);">Step 1 — Add a new app or version</strong><br>
+          Use the Apps tab to add or edit an app. For updates, click the app name, then "Add Version" and fill in the new version details.</div>
+        <div><strong style="color:var(--text);">Step 2 — Upload your IPA</strong><br>
+          Place your <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">.ipa</code> file in the <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">/apps/</code> folder of your GitHub repo. Name it <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">com.bundle.id-1.2.3.ipa</code>.</div>
+        <div><strong style="color:var(--text);">Step 3 — Upload your icon</strong><br>
+          Place your icon PNG in <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">/icons/</code>. Use a 512×512 PNG named <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">com.bundle.id.png</code>.</div>
+        <div><strong style="color:var(--text);">Step 4 — Export and replace apps.json</strong><br>
+          Click "Export JSON" above and replace the <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">apps.json</code> file in your repo root.</div>
+        <div><strong style="color:var(--text);">Step 5 — Commit and push</strong><br>
+          Commit all changes to your <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">main</code> branch. GitHub Pages auto-deploys in ~60 seconds.</div>
+        <div><strong style="color:var(--text);">Step 6 — Users get the update</strong><br>
+          AltStore and SideStore check for updates periodically. When the version number in apps.json is higher than the installed version, users see an update in the Updates tab.</div>
+        <div style="background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.2); border-radius:10px; padding:14px; color:var(--text);">
+          <strong>💡 Tip:</strong> Never change the <code>bundleIdentifier</code> of an existing app — AltStore uses it to track installed apps. Only the <code>version</code> field inside <code>versions[]</code> triggers an update.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✓ Saved</div>
+
+<input type="file" id="file-input" accept=".json" style="display:none;" onchange="handleFileLoad(event)" />
+
+<script>
+  // ── State ──
+  let repoData = null;
+  let editingAppIdx = -1; // -1 = new app
+  let versionCount = 0;
+
+  // ── Init ──
+  async function init() {
+    try {
+      const res = await fetch('./apps.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      repoData = await res.json();
+    } catch {
+      repoData = {
+        name: 'My AltStore Repository',
+        identifier: 'com.yourname.altsource',
+        subtitle: '',
+        description: '',
+        iconURL: '',
+        headerURL: '',
+        website: '',
+        tintColor: '#007AFF',
+        featuredApps: [],
+        apps: [],
+        news: []
+      };
+    }
+    renderAll();
+  }
+
+  function renderAll() {
+    renderAppList();
+    renderRepoMeta();
+    renderJSONPreview();
+  }
+
+  // ── App List ──
+  function renderAppList() {
+    const apps = repoData.apps || [];
+    document.getElementById('apps-count').textContent = `(${apps.length})`;
+    const c = document.getElementById('app-list-container');
+    if (!apps.length) {
+      c.innerHTML = '<p style="color:var(--muted);font-size:13px;">No apps yet. Click "Add App" to get started.</p>';
+      return;
+    }
+    c.innerHTML = apps.map((app, i) => {
+      const latest = (app.versions || [])[0] || {};
+      const iconHtml = app.iconURL
+        ? `<img src="${esc(app.iconURL)}" alt="icon" onerror="this.parentElement.innerHTML='<div class=icon-fb>📦</div>'">`
+        : '<div class="icon-fb">📦</div>';
+      return `<div class="app-list-item">
+        <div class="app-list-left">
+          <div class="app-list-icon">${iconHtml}</div>
+          <div>
+            <div class="app-list-name">${esc(app.name)}</div>
+            <div class="app-list-bundle">${esc(app.bundleIdentifier)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="app-list-version">v${esc(latest.version || '—')}</span>
+          <button class="btn btn-secondary" style="padding:6px 12px;" onclick="openEditApp(${i})">Edit</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Repo meta ──
+  function renderRepoMeta() {
+    const d = repoData;
+    document.getElementById('m-name').value = d.name || '';
+    document.getElementById('m-id').value = d.identifier || '';
+    document.getElementById('m-subtitle').value = d.subtitle || '';
+    document.getElementById('m-desc').value = d.description || '';
+    document.getElementById('m-icon').value = d.iconURL || '';
+    document.getElementById('m-header').value = d.headerURL || '';
+    document.getElementById('m-website').value = d.website || '';
+    document.getElementById('m-tint').value = d.tintColor || '#007AFF';
+  }
+
+  function saveRepoMeta() {
+    repoData.name = val('m-name');
+    repoData.identifier = val('m-id');
+    repoData.subtitle = val('m-subtitle');
+    repoData.description = val('m-desc');
+    repoData.iconURL = val('m-icon');
+    repoData.headerURL = val('m-header');
+    repoData.website = val('m-website');
+    repoData.tintColor = val('m-tint');
+    renderJSONPreview();
+    toast('✓ Repository info saved');
+  }
+
+  // ── App form ──
+  function openAddApp() {
+    editingAppIdx = -1;
+    document.getElementById('app-form-title').textContent = 'Add App';
+    document.getElementById('delete-app-btn').style.display = 'none';
+    clearAppForm();
+    addVersion(); // start with one version
+    document.getElementById('app-form-card').style.display = '';
+    document.getElementById('app-form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function openEditApp(idx) {
+    editingAppIdx = idx;
+    const app = repoData.apps[idx];
+    document.getElementById('app-form-title').textContent = `Edit: ${app.name}`;
+    document.getElementById('delete-app-btn').style.display = '';
+    document.getElementById('f-name').value = app.name || '';
+    document.getElementById('f-bundle').value = app.bundleIdentifier || '';
+    document.getElementById('f-dev').value = app.developerName || '';
+    document.getElementById('f-subtitle').value = app.subtitle || '';
+    document.getElementById('f-icon').value = app.iconURL || '';
+    document.getElementById('f-tint').value = app.tintColor || '';
+    document.getElementById('f-desc').value = app.localizedDescription || '';
+    document.getElementById('f-screenshots').value = (app.screenshotURLs || []).join('\n');
+
+    // Versions
+    const vl = document.getElementById('version-list');
+    vl.innerHTML = '';
+    versionCount = 0;
+    (app.versions || []).forEach(v => addVersion(v));
+
+    document.getElementById('app-form-card').style.display = '';
+    document.getElementById('app-form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function closeAppForm() {
+    document.getElementById('app-form-card').style.display = 'none';
+  }
+
+  function clearAppForm() {
+    ['f-name','f-bundle','f-dev','f-subtitle','f-icon','f-tint','f-desc','f-screenshots']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('version-list').innerHTML = '';
+    versionCount = 0;
+  }
+
+  function addVersion(v = null) {
+    const id = versionCount++;
+    const vl = document.getElementById('version-list');
+    const div = document.createElement('div');
+    div.className = 'version-item';
+    div.id = `ver-${id}`;
+    div.innerHTML = `
+      <div class="version-header">
+        <span class="version-tag">Version ${id + 1}</span>
+        <button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="removeVersion(${id})">Remove</button>
+      </div>
+      <div class="form-grid cols-3" style="margin-bottom:10px;">
+        <div class="form-group">
+          <label>Version *</label>
+          <input type="text" id="v-ver-${id}" placeholder="1.0.0" value="${esc(v?.version||'')}"/>
+        </div>
+        <div class="form-group">
+          <label>Release Date *</label>
+          <input type="date" id="v-date-${id}" value="${v?.date ? v.date.split('T')[0] : ''}"/>
+        </div>
+        <div class="form-group">
+          <label>File Size (bytes)</label>
+          <input type="number" id="v-size-${id}" placeholder="1048576" value="${v?.size||''}"/>
+        </div>
+        <div class="form-group">
+          <label>Download URL *</label>
+          <input type="text" id="v-url-${id}" placeholder="apps/com.example.app-1.0.0.ipa" value="${esc(v?.downloadURL||'')}"/>
+        </div>
+        <div class="form-group">
+          <label>Min iOS Version</label>
+          <input type="text" id="v-min-${id}" placeholder="15.0" value="${esc(v?.minOSVersion||'')}"/>
+        </div>
+        <div class="form-group">
+          <label>Max iOS Version</label>
+          <input type="text" id="v-max-${id}" placeholder="18.9" value="${esc(v?.maxOSVersion||'')}"/>
+        </div>
+        <div class="form-group full">
+          <label>Release Notes</label>
+          <textarea id="v-notes-${id}" placeholder="• Bug fixes&#10;• Performance improvements">${esc(v?.localizedDescription||'')}</textarea>
+        </div>
+      </div>`;
+    vl.appendChild(div);
+  }
+
+  function removeVersion(id) {
+    const el = document.getElementById(`ver-${id}`);
+    if (el) el.remove();
+  }
+
+  function saveApp() {
+    const name = val('f-name');
+    const bundle = val('f-bundle');
+    if (!name || !bundle) { toast('⚠ Name and Bundle ID are required', true); return; }
+
+    // Collect versions
+    const versions = [];
+    document.querySelectorAll('.version-item').forEach(item => {
+      const id = item.id.replace('ver-', '');
+      const version = val(`v-ver-${id}`);
+      const dateRaw = val(`v-date-${id}`);
+      const url = val(`v-url-${id}`);
+      if (!version || !url) return;
+      const entry = { version, downloadURL: url };
+      if (dateRaw) entry.date = new Date(dateRaw).toISOString();
+      const size = parseInt(document.getElementById(`v-size-${id}`).value);
+      if (!isNaN(size) && size > 0) entry.size = size;
+      const minOS = val(`v-min-${id}`);
+      if (minOS) entry.minOSVersion = minOS;
+      const maxOS = val(`v-max-${id}`);
+      if (maxOS) entry.maxOSVersion = maxOS;
+      const notes = val(`v-notes-${id}`);
+      if (notes) entry.localizedDescription = notes;
+      versions.push(entry);
+    });
+
+    const screenshots = val('f-screenshots').split('\n').map(s => s.trim()).filter(Boolean);
+
+    const appObj = {
+      name,
+      bundleIdentifier: bundle,
+      developerName: val('f-dev'),
+      subtitle: val('f-subtitle'),
+      localizedDescription: val('f-desc'),
+      iconURL: val('f-icon'),
+      tintColor: val('f-tint') || '#007AFF',
+      screenshotURLs: screenshots,
+      versions,
+      appPermissions: { entitlements: [], privacy: {} }
+    };
+
+    if (!repoData.apps) repoData.apps = [];
+    if (editingAppIdx >= 0) {
+      repoData.apps[editingAppIdx] = appObj;
+    } else {
+      repoData.apps.push(appObj);
+    }
+
+    renderAll();
+    closeAppForm();
+    toast('✓ App saved');
+  }
+
+  function deleteCurrentApp() {
+    if (editingAppIdx < 0) return;
+    const app = repoData.apps[editingAppIdx];
+    if (!confirm(`Delete "${app.name}"? This cannot be undone.`)) return;
+    repoData.apps.splice(editingAppIdx, 1);
+    renderAll();
+    closeAppForm();
+    toast('✓ App deleted');
+  }
+
+  // ── JSON Preview ──
+  function renderJSONPreview() {
+    document.getElementById('json-output').textContent = JSON.stringify(repoData, null, 2);
+  }
+
+  // ── Export / Import ──
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify(repoData, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'apps.json';
+    a.click();
+    toast('✓ apps.json downloaded');
+  }
+
+  function copyJSON() {
+    navigator.clipboard.writeText(JSON.stringify(repoData, null, 2))
+      .then(() => toast('✓ JSON copied to clipboard'));
+  }
+
+  function loadFromFile() { document.getElementById('file-input').click(); }
+  function handleFileLoad(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        repoData = JSON.parse(ev.target.result);
+        renderAll();
+        toast('✓ JSON loaded');
+      } catch { toast('⚠ Invalid JSON file', true); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  // ── Tabs ──
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+    document.getElementById(`tab-${name}`).classList.add('active');
+    if (name === 'preview') renderJSONPreview();
+  }
+
+  // ── Helpers ──
+  function val(id) { return (document.getElementById(id)?.value || '').trim(); }
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let toastTimer;
+  function toast(msg, err = false) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.color = err ? '#FF3B30' : '#34C759';
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  init();
+</script>
+</body>
+</html>
